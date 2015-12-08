@@ -1,14 +1,14 @@
 //
 //  regex.swift
-//  unchained
+//  SwiftyRegex
 //
 //  Created by Johannes Schriewer on 06/12/15.
 //  Copyright © 2015 Johannes Schriewer. All rights reserved.
 //
 
-import Foundation
 import pcre2
 
+/// internal extension to convert a string to an integer array
 extension SequenceType where Generator.Element == UInt8 {
     static func fromString(string: String) -> [UInt8] {
         var temp = [UInt8]()
@@ -19,13 +19,20 @@ extension SequenceType where Generator.Element == UInt8 {
     }
 }
 
+/// Regular expression matcher based on pcre2
 public class RegEx {
     private let compiled: COpaquePointer
     
+    /// Errors that may be thrown by initializer
     enum Error: ErrorType {
+        /// Invalid pattern, contains error offset and error message from pcre2 engine
         case InvalidPattern(errorOffset: Int, errorMessage: String)
     }
     
+    /// Initialize RegEx with pattern
+    ///
+    /// - parameter pattern: Regular Expression pattern
+    /// - throws: RegEx.Error.InvalidPattern when pattern is invalid
     public init(pattern: String) throws {
         let tmp = [UInt8].fromString(pattern)
         
@@ -44,6 +51,10 @@ public class RegEx {
         pcre2_code_free_8(self.compiled)
     }
     
+    /// Match a string against the pattern
+    ///
+    /// - parameter string: the string to match
+    /// - returns: tuple with matches, named parameters are returned as numbered matches too
     public func match(string: String) -> (numberedParams:[String], namedParams:[String:String]) {
         let match_data = pcre2_match_data_create_from_pattern_8(self.compiled, nil)
         defer {
