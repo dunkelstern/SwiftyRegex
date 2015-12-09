@@ -24,7 +24,7 @@ public class RegEx {
     private let compiled: COpaquePointer
     
     /// Errors that may be thrown by initializer
-    enum Error: ErrorType {
+    public enum Error: ErrorType {
         /// Invalid pattern, contains error offset and error message from pcre2 engine
         case InvalidPattern(errorOffset: Int, errorMessage: String)
     }
