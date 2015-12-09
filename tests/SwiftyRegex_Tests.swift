@@ -25,8 +25,10 @@ class SwiftyRegex_Tests: XCTestCase {
         do {
             let _ = try RegEx(pattern: "([0")
             XCTFail("Pattern should not compile")
+        } catch RegEx.Error.InvalidPattern(let offset, let message) {
+            print("Pattern invalid @ \(offset): \(message)")
         } catch {
-            // ok
+            
         }
     }
 
