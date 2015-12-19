@@ -23,6 +23,11 @@ extension SequenceType where Generator.Element == UInt8 {
 public class RegEx {
     private let compiled: COpaquePointer
     
+    public let pattern: String
+    public let namedCaptureGroups:[String:Int]
+    public let numCaptureGroups:Int
+    public let canMatchEmptyString:Bool
+    
     /// Errors that may be thrown by initializer
     public enum Error: ErrorType {
         /// Invalid pattern, contains error offset and error message from pcre2 engine
@@ -34,6 +39,8 @@ public class RegEx {
     /// - parameter pattern: Regular Expression pattern
     /// - throws: RegEx.Error.InvalidPattern when pattern is invalid
     public init(pattern: String) throws {
+        self.pattern = pattern
+        
         let tmp = [UInt8].fromString(pattern)
         
         var errorNumber:Int32 = 0
@@ -43,8 +50,49 @@ public class RegEx {
             var buffer = [UInt8](count: 256, repeatedValue: 0)
             pcre2_get_error_message_8(errorNumber, &buffer, buffer.count)
             let message = String(CString: UnsafePointer<CChar>(buffer), encoding: NSUTF8StringEncoding)!
+            self.namedCaptureGroups = [String:Int]()
+            self.numCaptureGroups = 0
+            self.canMatchEmptyString = false
             throw RegEx.Error.InvalidPattern(errorOffset: errorOffset, errorMessage: message)
         }
+
+        // number of capture groups
+        var patternCount: Int = 0
+        pcre2_pattern_info_8(self.compiled, UInt32(PCRE2_INFO_CAPTURECOUNT), &patternCount)
+        self.numCaptureGroups = patternCount
+        
+        // named capture groups
+        var named = [String:Int]()
+        pcre2_pattern_info_8(self.compiled, UInt32(PCRE2_INFO_NAMECOUNT), &patternCount)
+        if patternCount > 0 {
+            var name_table = UnsafeMutablePointer<UInt8>()
+            var name_entry_size: Int = 0
+            
+            pcre2_pattern_info_8(self.compiled, UInt32(PCRE2_INFO_NAMETABLE), &name_table)
+            pcre2_pattern_info_8(self.compiled, UInt32(PCRE2_INFO_NAMEENTRYSIZE), &name_entry_size)
+            
+            for i: Int in 0..<patternCount {
+                let offset = name_entry_size * i
+                let num = (Int(name_table.advancedBy(offset).memory) << 8) + Int(name_table.advancedBy(offset + 1).memory)
+                
+                // pattern name
+                var patternName = [UInt8](count: name_entry_size + 1, repeatedValue: 0)
+                for idx in (name_entry_size * i + 2)..<(name_entry_size * (i + 1)) {
+                    patternName[idx - (name_entry_size * i + 2)] = name_table[idx]
+                }
+                
+                guard let patternNameString = String(CString: UnsafePointer<CChar>(patternName), encoding: NSUTF8StringEncoding) else {
+                    continue
+                }
+
+                named[patternNameString] = num
+            }
+        }
+        self.namedCaptureGroups = named
+        
+        var empty: Int = 0
+        pcre2_pattern_info_8(self.compiled, UInt32(PCRE2_INFO_MATCHEMPTY), &empty)
+        self.canMatchEmptyString = (empty != 0)
     }
     
     deinit {
@@ -91,45 +139,22 @@ public class RegEx {
         
         // named results
         var named = [String:String]()
-        var patternCount: Int = 0
-        pcre2_pattern_info_8(self.compiled, UInt32(PCRE2_INFO_NAMECOUNT), &patternCount)
-        if patternCount > 0 {
-            var name_table = UnsafeMutablePointer<UInt8>()
-            var name_entry_size: Int = 0
+        for (grp, num) in self.namedCaptureGroups {
+            let startOffset = outVector.advancedBy(2 * num).memory
+            let length = outVector.advancedBy(2 * num + 1).memory
             
-            pcre2_pattern_info_8(self.compiled, UInt32(PCRE2_INFO_NAMETABLE), &name_table)
-            pcre2_pattern_info_8(self.compiled, UInt32(PCRE2_INFO_NAMEENTRYSIZE), &name_entry_size)
+            if length == 0 {
+                named[grp] = ""
+                continue
+            }
             
-            for i: Int in 0..<patternCount {
-                let offset = name_entry_size * i
-                let num = (Int(name_table.advancedBy(offset).memory) << 8) + Int(name_table.advancedBy(offset + 1).memory)
-
-                // pattern name
-                var patternName = [UInt8](count: name_entry_size + 1, repeatedValue: 0)
-                for idx in (name_entry_size * i + 2)..<(name_entry_size * (i + 1)) {
-                    patternName[idx - (name_entry_size * i + 2)] = name_table[idx]
-                }
-                
-                // substring match
-                let startOffset = outVector.advancedBy(2 * num).memory
-                let length = outVector.advancedBy(2 * num + 1).memory
-                
-                guard let patternNameString = String(CString: UnsafePointer<CChar>(patternName), encoding: NSUTF8StringEncoding) else {
-                    continue
-                }
-                
-                if length == 0 {
-                    named[patternNameString] = ""
-                }
-                
-                var subString = [UInt8](count: length + 1, repeatedValue: 0)
-                for idx in startOffset..<length {
-                    subString[idx-startOffset] = subject[idx]
-                }
-
-                if let match = String(CString: UnsafePointer<CChar>(subString), encoding: NSUTF8StringEncoding) {
-                    named[patternNameString] = match
-                }
+            var subString = [UInt8](count: length + 1, repeatedValue: 0)
+            for idx in startOffset..<length {
+                subString[idx-startOffset] = subject[idx]
+            }
+            
+            if let match = String(CString: UnsafePointer<CChar>(subString), encoding: NSUTF8StringEncoding) {
+                named[grp] = match
             }
         }
         
