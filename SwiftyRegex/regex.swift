@@ -12,6 +12,7 @@ import pcre2
 extension SequenceType where Generator.Element == UInt8 {
     static func fromString(string: String) -> [UInt8] {
         var temp = [UInt8]()
+        temp.reserveCapacity(string.utf8.count)
         for c in string.utf8 {
             temp.append(UInt8(c))
         }
