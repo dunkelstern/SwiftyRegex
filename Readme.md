@@ -1,6 +1,6 @@
 # SwiftyRegex
 
-SwiftyRegex is a regular expression matcher based on the pcre2 library
+SwiftyRegex is a regular expression matcher based on the pcre library
 
 ## License
 
@@ -8,15 +8,19 @@ SwiftyRegex is licensed under the BSD 3 Clause license. See LICENSE.txt for full
 
 ## Dependencies
 
-SwiftyRegex needs the pcre2 library installed in `/usr/local`.
+SwiftyRegex needs the pcre library installed in `/usr/include`.
 
 On a Mac just use Homebrew:
 
 ~~~bash
-brew install pcre2
+brew install pcre
 ~~~
 
-Linux support is planned but not tested
+On Ubuntu Linux install `libpcre3-dev`:
+
+~~~bash
+sudo apt-get install libpcre3-dev
+~~~
 
 ## Usage
 
