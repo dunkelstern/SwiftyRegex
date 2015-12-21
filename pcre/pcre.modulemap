@@ -1,5 +1,0 @@
-framework module pcre2 [system] {
-    umbrella header "pcre2-umbrella.h"
-    link "pcre2-8"
-    export *
-}

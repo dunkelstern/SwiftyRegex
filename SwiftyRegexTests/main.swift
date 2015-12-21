@@ -9,18 +9,21 @@
 import XCTest
 @testable import SwiftyRegex
 
-class SwiftyRegex_Tests: XCTestCase {
-    
-    override func setUp() {
-        super.setUp()
-        // Put setup code here. This method is called before the invocation of each test method in the class.
-    }
-    
-    override func tearDown() {
-        // Put teardown code here. This method is called after the invocation of each test method in the class.
-        super.tearDown()
-    }
+class TestSwiftyRegex: XCTestCase {
 
+    var allTests : [(String, () -> Void)] {
+        return [
+            ("testCompileFailed", testCompileFailed),
+            ("testEmptyPattern", testEmptyPattern),
+            ("testEmptyString", testEmptyString),
+            ("testNumberedMatch", testNumberedMatch),
+            ("testNumberedNoMatch", testNumberedNoMatch),
+            ("testNamedMatch", testNamedMatch),
+            ("testNamedNoMatch", testNamedNoMatch),
+            ("testMixedMatch", testMixedMatch)
+        ]
+    }
+    
     func testCompileFailed() {
         do {
             let _ = try RegEx(pattern: "([0")
@@ -148,3 +151,6 @@ class SwiftyRegex_Tests: XCTestCase {
         }
     }
 }
+
+print("Starting tests...")
+XCTMain([TestSwiftyRegex()])
