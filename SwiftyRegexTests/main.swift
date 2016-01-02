@@ -23,7 +23,7 @@ class TestSwiftyRegex: XCTestCase {
             ("testMixedMatch", testMixedMatch)
         ]
     }
-    
+
     func testCompileFailed() {
         do {
             let _ = try RegEx(pattern: "([0")
@@ -31,7 +31,7 @@ class TestSwiftyRegex: XCTestCase {
         } catch RegEx.Error.InvalidPattern(let offset, let message) {
             print("Pattern invalid @ \(offset): \(message)")
         } catch {
-            
+
         }
     }
 
@@ -39,14 +39,15 @@ class TestSwiftyRegex: XCTestCase {
         do {
             let re = try RegEx(pattern: "")
             let matches = re.match("1234 : Hallo Welt")
-            
+
             let numbered = matches.numberedParams
             let named = matches.namedParams
-            
-            XCTAssert(numbered.count == 1)
-            XCTAssert(numbered[0] == "")
-            
-            XCTAssert(named.count == 0)
+
+            XCTAssert(numbered.count == 1, "Expected count of 1, got \(numbered.count)")
+            if numbered.count == 1 {
+                XCTAssert(numbered[0] == "")
+            }
+            XCTAssert(named.count == 0, "Expected count of 0, got \(named.count)")
         } catch {
             XCTFail("Could not compile regex pattern")
         }
@@ -56,12 +57,12 @@ class TestSwiftyRegex: XCTestCase {
         do {
             let re = try RegEx(pattern: "([0-9]+)[\\s]*:[\\s]*(.*)")
             let matches = re.match("")
-            
+
             let numbered = matches.numberedParams
             let named = matches.namedParams
-            
-            XCTAssert(numbered.count == 0)
-            XCTAssert(named.count == 0)
+
+            XCTAssert(numbered.count == 0, "Expected count of 0, got \(numbered.count)")
+            XCTAssert(named.count == 0, "Expected count of 0, got \(named.count)")
         } catch {
             XCTFail("Could not compile regex pattern")
         }
@@ -74,12 +75,14 @@ class TestSwiftyRegex: XCTestCase {
 
             let numbered = matches.numberedParams
             let named = matches.namedParams
-            
-            XCTAssert(numbered.count == 3)
-            XCTAssert(numbered[1] == "1234")
-            XCTAssert(numbered[2] == "Hallo Welt")
 
-            XCTAssert(named.count == 0)
+            XCTAssert(numbered.count == 3, "Expected count of 3, got \(numbered.count)")
+            if numbered.count == 3 {
+                XCTAssert(numbered[1] == "1234")
+                XCTAssert(numbered[2] == "Hallo Welt")
+            }
+
+            XCTAssert(named.count == 0, "Expected count of 0, got \(named.count)")
         } catch {
             XCTFail("Could not compile regex pattern")
         }
@@ -89,12 +92,12 @@ class TestSwiftyRegex: XCTestCase {
         do {
             let re = try RegEx(pattern: "([0-9]+)[\\s]*:[\\s]*(.*)")
             let matches = re.match("Hallo Welt Blafasel 1234")
-            
+
             let numbered = matches.numberedParams
             let named = matches.namedParams
-            
-            XCTAssert(numbered.count == 0)
-            XCTAssert(named.count == 0)
+
+            XCTAssert(numbered.count == 0, "Expected count of 0, got \(numbered.count)")
+            XCTAssert(named.count == 0, "Expected count of 0, got \(named.count)")
         } catch {
             XCTFail("Could not compile regex pattern")
         }
@@ -104,47 +107,49 @@ class TestSwiftyRegex: XCTestCase {
         do {
             let re = try RegEx(pattern: "(?P<num>[0-9]+)[\\s]*:[\\s]*(?P<text>.*)")
             let matches = re.match("1234 : Hallo Welt")
-            
+
             let numbered = matches.numberedParams
             let named = matches.namedParams
-            
-            XCTAssert(numbered.count == 3)
-            XCTAssert(named.count == 2)
+
+            XCTAssert(numbered.count == 3, "Expected count of 1, got \(numbered.count)")
+            XCTAssert(named.count == 2, "Expected count of 2, got \(named.count)")
             XCTAssert(named["num"] == "1234")
             XCTAssert(named["text"] == "Hallo Welt")
         } catch {
             XCTFail("Could not compile regex pattern")
         }
     }
-    
+
     func testNamedNoMatch() {
         do {
             let re = try RegEx(pattern: "(?P<num>[0-9]+)[\\s]*:[\\s]*(?P<text>.*)")
             let matches = re.match("Hallo Welt Blafasel 1234")
-            
+
             let numbered = matches.numberedParams
             let named = matches.namedParams
-            
-            XCTAssert(numbered.count == 0)
-            XCTAssert(named.count == 0)
+
+            XCTAssert(numbered.count == 0, "Expected count of 0, got \(numbered.count)")
+            XCTAssert(named.count == 0, "Expected count of 0, got \(named.count)")
         } catch {
             XCTFail("Could not compile regex pattern")
         }
     }
-    
+
     func testMixedMatch() {
         do {
             let re = try RegEx(pattern: "(?P<num>[0-9]+)[\\s]*:[\\s]*(.*)")
             let matches = re.match("1234 : Hallo Welt")
-            
+
             let numbered = matches.numberedParams
             let named = matches.namedParams
-            
-            XCTAssert(numbered.count == 3)
-            XCTAssert(numbered[1] == "1234")
-            XCTAssert(numbered[2] == "Hallo Welt")
 
-            XCTAssert(named.count == 1)
+            XCTAssert(numbered.count == 3, "Expected count of 3, got \(numbered.count)")
+            if numbered.count == 3 {
+                XCTAssert(numbered[1] == "1234")
+                XCTAssert(numbered[2] == "Hallo Welt")
+            }
+
+            XCTAssert(named.count == 1, "Expected count of 1, got \(named.count)")
             XCTAssert(named["num"] == "1234")
         } catch {
             XCTFail("Could not compile regex pattern")
