@@ -16,6 +16,7 @@ extension SequenceType where Generator.Element == CChar {
         for c in string.utf8 {
             temp.append(CChar(c))
         }
+        temp.append(CChar(0))
         return temp
     }
 }
